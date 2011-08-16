@@ -1,0 +1,20 @@
+{
+  "name": "HashTable",
+  "description": "HashTable creates associative arrays where the keys are not restricted to strings and numbers",
+  "main": "./hashTable",
+  "version": "0.0.1",
+  "author": "Noah Feldman (http://github.com/nfeldman)",
+  "repository": {
+        "type": "git",
+        "url": "http://github.com/nfeldman/hashTable.js"
+   },
+   "licenses": [
+     {
+        "type": "GPL3"
+     }
+   ],
+   "bugs": {
+     "web" : "http://github.com/nfeldman/hashTable.js/issues"
+   },
+   keywords: ['table','hashtable','associative array']
+}
