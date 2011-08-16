@@ -57,33 +57,33 @@ if (!Array.prototype.forEach) {
         // test 1, new object lenght is 0
         equal(testobj.len, 0, ' length is 0');
         // test 2, setting a string as a key returns this
-        equal(testobj.set('string_key', 'test'), testobj, 'setting a property on the object returns the object');
+        equal(testobj.set('string_key', 'test'), testobj, 'setting a property with a string key returns `this`');
         // test 3, getting by string key returns correct value
         equal(testobj.get('string_key'), 'test', 'get works with string keys');
         // test 4, object with 1 entry has len of 1
         equal(testobj.len, 1, 'object with 1 entry reports len == 1');
         // test 5, setting an object as a key returns this
-        equal(testobj.set(o1, 'test'), testobj, 'setting a property on the object returns the object');
+        equal(testobj.set(o1, 'test'), testobj, 'setting a property with an object key returns `this`');
         // test 6, getting a value with an object key
         equal(testobj.get(o1), 'test', 'get works with object keys');
         // test 7, setting an array as a key returns this
-        equal(testobj.set(a1, o1), testobj);
+        equal(testobj.set(a1, o1), testobj, 'setting a property with an array key returns `this`');
         // test 8, getting a value with an object key
         equal(testobj.get(a1), o1, 'get works with array keys');
         // test 9, setting a RegExp as a key returns this
-        equal(testobj.set(r1, a1), testobj);
+        equal(testobj.set(r1, a1), testobj, 'setting a property with a RegExp key returns `this`');
         // test 10, getting a value with a RegExp key
         equal(testobj.get(r1), a1, 'get works with regex keys');
         // test 11, setting a DOMNode as a key returns this
-        equal(testobj.set(node, r1), testobj);
+        equal(testobj.set(node, r1), testobj, 'setting a property with a DOM Element key returns `this`');
         // test 12, getting a value with a DOMNode key
-        equal(testobj.get(node), r1, 'get works with node keys');
+        equal(testobj.get(node), r1, 'get works with Element keys');
         // test 13, setting a function as a key returns this
-        equal(testobj.set(identity, node), testobj);
+        equal(testobj.set(identity, node), testobj, 'setting a property with a function key returns `this`');
         // test 14, getting a value with a function key
         equal(testobj.get(identity), node, 'get works with function keys');
         // test 15, setting a number as a key returns this
-        equal(testobj.set(1, identity), testobj);
+        equal(testobj.set(1, identity), testobj, 'setting a property with a numeric key returns `this`');
         // test 16, getting a value with a function key
         equal(testobj.get(1), identity, 'get works with numeric keys');
     });
