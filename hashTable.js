@@ -26,10 +26,10 @@ var undef = typeof U,
 
     // will be trickyish... typeOf isn't well named
     typeOf = (function () {
-        var simple = {'string': 'string', 'number': 'number', 'function': 'function' },
+        var simple = simple = /^(?:string|number|function)$/,
             element = /^\[object HTML.+Element\]$/, // only in good browsers
             collection = /^\[object (?:HTMLCollection|NamedNodeMap|NodeList)\]$/,
-            hostMethod = /^(?:function|object|unknown)$/,
+            hostMethod = /^(?:function|object|unknown)$/, // David Mark's test
             protolist = {
             '[object Array]': 'array',
             '[object Date]': 'date',
@@ -43,7 +43,7 @@ var undef = typeof U,
                 return false;
 
             type = typeof key;
-            ret = simple[type] ? simple[type] : protolist[toStr.call(key)];
+            ret = simple.test(type) ? type : protolist[toStr.call(key)];
             if (ret !== U)
                 return ret;
             
