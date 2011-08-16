@@ -158,22 +158,16 @@ PL.prototype = {
     store: function () {
         var args = arguments,
             l = args.length;
-        switch (l) {
-            case 0:
-              return;
-            case 1:
-            case 2:
-              this.list[args[0]] = args[1];
-              if (this.useCache)
-                 this.typeIndex(args, this.len * 2);
-              break;
-            default:
-              if (arguments.length % 2 && arguments.length > 1)
-                 throw new Error('store requires an even number of arguments if adding more than one key');
-              push.apply(this.list, args);
-              if (this.useCache)
-                 this.typeIndex(slice.call(args), this.len * 2);
-              break;
+        if (l && l < 3) {
+            this.list[args[0]] = args[1];
+            if (this.useCache)
+                this.typeIndex(args, this.len * 2);
+         } else {
+            if (arguments.length % 2 && arguments.length > 1)
+                throw new Error('store requires an even number of arguments if adding more than one key');
+            push.apply(this.list, args);
+            if (this.useCache)
+                this.typeIndex(slice.call(args), this.len * 2);
         }
         this.setLen();
         return true;
