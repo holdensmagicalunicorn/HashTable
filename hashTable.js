@@ -26,7 +26,7 @@ var undef = typeof U,
 
     // will be trickyish... typeOf isn't well named
     typeOf = (function () {
-        var simple = {'string': 'string', 'number': 'number', 'function': 'func' },
+        var simple = {'string': 'string', 'number': 'number', 'function': 'function' },
             element = /^\[object HTML.+Element\]$/, // only in good browsers
             collection = /^\[object (?:HTMLCollection|NamedNodeMap|NodeList)\]$/,
             hostMethod = /^(?:function|object|unknown)$/,
