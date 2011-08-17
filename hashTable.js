@@ -21,41 +21,7 @@ var undef = typeof U,
 	toStr = Object.prototype.toString,
 	// TODO fix `remove` and add it back to publik
 	publik = 'set|unset|store|get|del|remove|keys|each|flip', // list of methods that we'll allow the wrapper to interact with
-	pubtest = RegExp('^(' + publik + ')$'), 
-
-	// will be trickyish... typeOf isn't well named
-	typeOf = (function () {
-		var simple = simple = /^(?:string|number|function)$/,
-			element = /^\[object HTML.+Element\]$/,
-			collection = /^\[object (?:HTMLCollection|NamedNodeMap|NodeList)\]$/,
-			hostMethod = /^(?:function|object|unknown)$/, // David Mark's test
-			protolist = {
-			'[object Array]': 'array',
-			'[object Date]': 'date',
-			'[object RegExp]': 'regexp'
-		};
-		
-		return function (key) {
-			var type, ret;
-			// no boolean, undefined, null, NaN or Infinity keys allowed
-			if (!key || key === true || key !== key || key == Infinity) 
-				return false;
-
-			type = typeof key;
-			ret = simple.test(type) ? type : protolist[toStr.call(key)];
-			if (ret !== U)
-				return ret;
-			
-			if (element.test(key) || exists(key, 'nodeType') && key.nodeType == 1)
-				return 'element';
-			
-			if (collection.test(key) || exists(key, 'length') && hostMethod.test(typeof key.namedIndex))
-				return 'collection';
-				
-			// else give up and return 'object' as a catch all
-				return 'object';
-		}
-	}());
+	pubtest = RegExp('^(' + publik + ')$'), typeCheck;
 
 // utilities
 function exists(obj, prop) {
@@ -78,11 +44,55 @@ function indexOfKey (array, key, space) {
 	return -1;
 }
 
-// super basic `each` only used to build HashTable's constructor
+// super basic `each`
 function each (array, callback) {
 	for (var i = 0, len = array.length; i < len; i++)
 		callback.call(U, array[i], i);
 }
+
+typeCheck = (function () {
+	var simple = simple = /^(?:string|number|function)$/,
+		element = /^\[object HTML.+Element\]$/,
+		collection = /^\[object (?:HTMLCollection|NamedNodeMap|NodeList)\]$/,
+		hostMethod = /^(?:function|object|unknown)$/, // David Mark's test
+		protolist = {
+		'[object Array]': 'array',
+		'[object Date]': 'date',
+		'[object RegExp]': 'regexp'
+	};
+	
+	return {
+		simple: function () {
+			var a = slice.call(arguments);
+				i = a.length;
+			// no boolean, undefined, null, NaN or Infinity keys allowed
+			while (i--)
+				if (!a[i] || a[i] === true || a[i] !== a[i] || a[i] == Infinity)
+					return false;
+			return true;
+		},
+		full: function (key) {
+			var type, ret;
+			if (!typeCheck.simple(key))
+				return false;
+
+			type = typeof key;
+			ret = simple.test(type) ? type : protolist[toStr.call(key)];
+			if (ret !== U)
+				return ret;
+			
+			if (element.test(key) || exists(key, 'nodeType') && key.nodeType == 1)
+				return 'element';
+			
+			if (collection.test(key) || exists(key, 'length') && hostMethod.test(typeof key.namedIndex))
+				return 'collection';
+				
+			// else give up and return 'object' as a catch all
+				return 'object';
+		}
+	}
+}());
+
 
 // Constructor for the wrapped object that is the actual hashtable
 function PL (/* cacheByTypeIfLengthGreaterThan */) {
@@ -105,7 +115,7 @@ PL.prototype = {
 	typeIndex: function (key, idx, end) {
 		if (!end) {
 			for (var i = 0, len = key.length, j = idx - 2; i < len; i += 2) {
-				var t = typeOf(key[i]);
+				var t = typeCheck.full(key[i]);
 				if (t) {
 					if (this.cache[t] == U)
 						this.cache[t] = [];
@@ -114,7 +124,7 @@ PL.prototype = {
 			}
 		} else if (end > idx) { // we don't actually use end for anything 
 			for (var i = 0, len = key.length, j = idx - 2; i < len; i += 2) {
-				var t = typeOf(key[i]);
+				var t = typeCheck.full(key[i]);
 				if (this.cache[t])
 					this.cache[t].splice(j += 2, 1);
 			}
@@ -135,6 +145,8 @@ PL.prototype = {
 	// set 1 key:value, if no value is provided and the key exists, set
 	// value to undefined, otherwise create a new key with a value of undefined
 	set: function (key, value) {
+		if (!typeCheck.simple(key))
+				throw new TypeError('Invalid key');
 		this.list.push(key, value);
 		if (this.useCache)
 			this.typeIndex([key, value], this.len * 2);
@@ -150,12 +162,18 @@ PL.prototype = {
 	// than to silently ignore one value, so that's what we do.
 	store: function () {
 		var args = arguments,
-			l = args.length;
-		if (l && l < 3) {
+			len = args.length,
+			test = [];
+
+		for (var i = 0; i < len; i += 2)
+			if (!typeCheck.simple(arguments[i]))
+				throw new TypeError(typeof arguments[i] + ' is not a valid key');
+
+		if (len && len < 3) {
 			this.list[args[0]] = args[1];
 			if (this.useCache)
 				this.typeIndex(args, this.len * 2);
-		 } else {
+		} else {
 			if (arguments.length % 2 && arguments.length > 1)
 				throw new Error('store requires an even number of arguments if adding more than one key');
 			push.apply(this.list, args);
