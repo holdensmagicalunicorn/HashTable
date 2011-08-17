@@ -8,7 +8,7 @@ README
 HashTables are associative arrays that can be indexed with almost any type or 
 primitive in the language and some from the environment. Object, Function, 
 Array, RegExp, String, and Number work, as do DOM Elements. Other DOM types 
-haven't been tested yet, nor have JSON objects, but they should work. Null, NaN, 
+haven't been tested yet, nor have JSON objects, but should work. Null, NaN, 
 undefined, Infinity, true, and false are not valid keys.
 
 ## License

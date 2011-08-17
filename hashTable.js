@@ -51,16 +51,16 @@ function each (array, callback) {
 }
 
 typeCheck = (function () {
-	var simple = simple = /^(?:string|number|function)$/,
+	var simple = /^(?:string|number|function)$/,
 		element = /^\[object HTML.+Element\]$/,
 		collection = /^\[object (?:HTMLCollection|NamedNodeMap|NodeList)\]$/,
 		hostMethod = /^(?:function|object|unknown)$/, // David Mark's test
 		protolist = {
-		'[object Array]': 'array',
-		'[object Date]': 'date',
-		'[object RegExp]': 'regexp'
-	};
-	
+			'[object Array]': 'array',
+			'[object Date]': 'date',
+			'[object RegExp]': 'regexp'
+		};
+
 	return {
 		simple: function () {
 			var a = slice.call(arguments);
@@ -80,15 +80,14 @@ typeCheck = (function () {
 			ret = simple.test(type) ? type : protolist[toStr.call(key)];
 			if (ret !== U)
 				return ret;
-			
+
 			if (element.test(key) || exists(key, 'nodeType') && key.nodeType == 1)
 				return 'element';
-			
+
 			if (collection.test(key) || exists(key, 'length') && hostMethod.test(typeof key.namedIndex))
 				return 'collection';
-				
-			// else give up and return 'object' as a catch all
-				return 'object';
+
+			return 'object'; // give up and return 'object' as a catch all
 		}
 	}
 }());
@@ -145,9 +144,14 @@ PL.prototype = {
 	// set 1 key:value, if no value is provided and the key exists, set
 	// value to undefined, otherwise create a new key with a value of undefined
 	set: function (key, value) {
+		var idx;
 		if (!typeCheck.simple(key))
 				throw new TypeError('Invalid key');
-		this.list.push(key, value);
+		idx = this.list[indexOfKey(this.list, key)];
+		if (typeof idx == 'number')
+			this.list[idx + 1] = value;
+		else
+			this.list.push(key, value);
 		if (this.useCache)
 			this.typeIndex([key, value], this.len * 2);
 		this.setLen();
