@@ -230,17 +230,16 @@ if (!Array.prototype.forEach) {
         // and check
         equal(testobj.get(identity), 'FunctionKeyValue', 'swapped one key/value pair');
     });
-    /*
+
     test('remove', function () {
-        expect(5);
+
         var testobj = new Table(), 
             o1 = {foo: 'bar'}, 
             a1 = ['a','b', o1], 
             r1 = /^$/g, 
             node = document.getElementById('test'), 
             identity = function (x) { return x },
-            values = [identity, "FunctionKeyValue"],
-            deleted;
+            deleted, expect;
         testobj.set('string', 'stringKeyValue');
         testobj.set(o1, 'ObjectKeyValue');
         testobj.set(a1, 'ArrayKeyValue');
@@ -248,18 +247,18 @@ if (!Array.prototype.forEach) {
         testobj.set(node, 'DOMNodeKeyValue');
         testobj.set(identity, 'FunctionKeyValue');
         testobj.set(1, 'NumberKeyValue');
-        
+        expect = [a1, 'ArrayKeyValue', r1, 'RegExpKeyValue', node, 'DOMNodeKeyValue', identity, 'FunctionKeyValue'];
         // test 1, make sure len is correct
         equal(testobj.len, 7, 'len is correct');
         // test 2, make sure we get a plain array back
         deleted = testobj.remove(a1, 1);
-        equal(deleted.length, values.length, 'del returns deleted key and value as plain array');
-        strictEqual(deleted[0], values[0], 'del returns deleted key in plain array');
-        strictEqual(deleted[1], values[1], 'del returns deleted value in plain array');
-        equal(testobj.len, 6, 'del reduces testobj.len by 1');
+        equal(deleted.length, expect.length, 'remove returns deleted keys and values as a plain array');
+		deleted.forEach(function (item, i) {
+			strictEqual(item, expect[i], 'item #' + (i + 1) + ' from array of deleted values is correct');
+		});
     
     });
-*/
+
     </script>
   </body>
 </html>
