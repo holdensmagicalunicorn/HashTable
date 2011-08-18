@@ -19,7 +19,6 @@ var undef = typeof U,
 	slice = Array.prototype.slice,
 	push = Array.prototype.push,
 	toStr = Object.prototype.toString,
-	// TODO fix `remove` and add it back to publik
 	publik = 'set|unset|store|get|del|remove|keys|each|flip', // list of methods that we'll allow the wrapper to interact with
 	pubtest = RegExp('^(' + publik + ')$'), typeCheck;
 
@@ -45,9 +44,9 @@ function indexOfKey (array, key, space) {
 }
 
 // super basic `each`
-function each (array, callback) {
-	for (var i = 0, len = array.length; i < len; i++)
-		callback.call(U, array[i], i);
+function each (list, callback) {
+	for (var i = 0, len = list.length; i < len; i++)
+		callback.call(U, list[i], i);
 }
 
 typeCheck = (function () {
@@ -264,7 +263,7 @@ function Table () {
 	var list;
 	if (this == G)
 		return new Table(arguments);
-	list = new PL();
+	list = new PL(arguments);
 
 	this.len = 0;
 	// this is only way for code outside the IIFE from which Table is returned 
