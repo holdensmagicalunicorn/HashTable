@@ -148,7 +148,7 @@ PL.prototype = {
 		if (!typeCheck.simple(key))
 				throw new TypeError('Invalid key');
 		idx = this.list[indexOfKey(this.list, key)];
-		if (typeof idx == 'number')
+		if (idx > -1)
 			this.list[idx + 1] = value;
 		else
 			this.list.push(key, value);
@@ -156,8 +156,8 @@ PL.prototype = {
 			this.typeIndex([key, value], this.len * 2);
 		this.setLen();
 		return true;
-	},
-	// allows explicitly setting a value to undefined, which is preferable
+	}, 
+	// `set` will also unset (key = U), but I prefer doing so explicitly 
 	unset: function (key) {
 		this.list[indexOfKey(this.list, key) + 1] = U;
 	 },
