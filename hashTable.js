@@ -1,10 +1,10 @@
 /**
- * @fileOverview The HashTable type implements simple associative arrays. An 
- * associative array is an array that can be indexed with almost any type or 
- * primitive in the language. Object, Function, Array, RegExp, String, useful 
- * DOM Objects, etc, almost everything except null, undefined, NaN, infinity, 
- * true, and false should work as keys. Check the tests to see what is currently 
- * known to work.
+ * @fileOverview The HashTable type implements simple associative arrays.  
+ * An associative array is an array that can be indexed with almost any type  
+ * or primitive in the language. Object, Function, Array, RegExp, String, 
+ * useful DOM Objects, etc, almost everything except null, undefined, NaN, 
+ * infinity, true, and false should work as keys. Check the tests to see what 
+ * is currently known to work.
  * @author Noah Feldman <nfeldman@nsfdesign.com>
  * @copyright 2011
  */
@@ -88,7 +88,7 @@ typeCheck = (function () {
 
             return 'object'; // give up and return 'object' as a catch all
         }
-    }
+    };
 }());
 
 
@@ -103,7 +103,7 @@ function PL (/* cacheByTypeIfLengthGreaterThan */) {
     this.minBeforeCache = 1E3; // arbitrary choice
     this.useCache = false;
     if (arguments.length == 1 && typeof arguments[0] == 'number')
-        this.minBeforeCache == arguments[0];
+        this.minBeforeCache = arguments[0];
  
     return this;
 
@@ -255,8 +255,7 @@ PL.prototype = {
             this.typeIndex(this.keys(), this.list.length);
         }
     }
-
-}
+};
 
 // constructor that is exported for public use
 function Table () {
