@@ -50,6 +50,7 @@ function each (list, callback) {
 }
 
 typeCheck = (function () {
+// TODO simplify
     var simple = /^(?:string|number|function)$/,
         element = /^\[object HTML.+Element\]$/,
         collection = /^\[object (?:HTMLCollection|NamedNodeMap|NodeList)\]$/,
@@ -62,7 +63,7 @@ typeCheck = (function () {
 
     return {
         simple: function () {
-            var a = slice.call(arguments);
+            var a = arguments.length == 1 ? [arguments[0]] : Array.apply(null, arguments),
                 i = a.length;
             // no boolean, undefined, null, NaN or Infinity keys allowed
             while (i--)
