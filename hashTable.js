@@ -11,7 +11,7 @@
 
 // TODO write a higher order function to return proxied constructors
 // TODO add map, reduce, reduce recursive, filter, diff, combine... maybe
-
+// This comment added to test committing from macgit
 var Table = (function (G, U) {
 
 var undef = typeof U,
