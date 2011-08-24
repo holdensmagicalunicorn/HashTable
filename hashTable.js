@@ -11,7 +11,7 @@
 
 // TODO write a higher order function to return proxied constructors
 // TODO add map, reduce, reduce recursive, filter, diff, combine... maybe
-// This comment added to test committing from macgit
+
 var Table = (function (G, U) {
 
 var undef = typeof U,
@@ -50,7 +50,8 @@ function each (list, callback) {
 }
 
 typeCheck = (function () {
-// TODO simplify
+// TODO simplify, toStr.call(arg).slice(8, -1) would do it, but we want to be 
+// less specific here
     var simple = /^(?:string|number|function)$/,
         element = /^\[object HTML.+Element\]$/,
         collection = /^\[object (?:HTMLCollection|NamedNodeMap|NodeList)\]$/,
@@ -101,6 +102,7 @@ function PL (/* cacheByTypeIfLengthGreaterThan */) {
     this.list = [];
     this.len = 0;
     this.cache = {}; 
+    this.flipped = 0; // added when I realized (again) that I'm an idiot
     this.minBeforeCache = 1E3; // arbitrary choice
     this.useCache = false;
     if (arguments.length == 1 && typeof arguments[0] == 'number')
@@ -132,7 +134,7 @@ PL.prototype = {
 
     // updates len as reported to the proxy object
     setLen: function () {
-        if (this.len * 2 != this.list.length)
+        if (this.len * 2 != this.list.length - this.flipped)
             this.len = this.list.length > 1 ? this.list.length / 2 : 0;
 
         if (!this.useCache && this.list.length >= this.minBeforeCache) {
@@ -146,7 +148,7 @@ PL.prototype = {
     set: function (key, value) {
         var idx;
         if (!typeCheck.simple(key))
-                throw new TypeError('Invalid key');
+                throw new TypeError(toString.call(key).slice(8, -1) + ' is not a valid key type');
         idx = this.list[indexOfKey(this.list, key)];
         if (idx > -1)
             this.list[idx + 1] = value;
@@ -157,38 +159,53 @@ PL.prototype = {
         this.setLen();
         return true;
     }, 
-    // `set` will also unset (key = U), but I prefer doing so explicitly 
+    // `set` will also unset (i.e. key: U), but I prefer doing so explicitly 
     unset: function (key) {
-        this.list[indexOfKey(this.list, key) + 1] = U;
+        var idx = indexOfKey(this.list, key);
+        if (idx == -1)
+            this.list.push(key, U);
+        else
+            this.list[idx + 1] = U;
     },
     // store a list of key value pairs. requires an even number of arguments. 
     // If odd, it seems more reasonable to assume a mistake and throw an error 
     // than to silently ignore one value, so that's what we do.
     store: function () {
-        var args = arguments,
-            len = args.length,
+        var len = arguments.length,
             test = [];
 
         for (var i = 0; i < len; i += 2)
             if (!typeCheck.simple(arguments[i]))
-                throw new TypeError(typeof arguments[i] + ' is not a valid key');
+                throw new TypeError(toString.call(key).slice(8, -1) + ' is not a valid key type');
 
         if (len && len < 3) {
-            this.list[args[0]] = args[1];
+            this.list[arguments[0]] = arguments[1];
             if (this.useCache)
-                this.typeIndex(args, this.len * 2);
+                this.typeIndex(arguments, this.len * 2);
         } else {
             if (arguments.length % 2 && arguments.length > 1)
                 throw new Error('store requires an even number of arguments if adding more than one key');
-            push.apply(this.list, args);
+            push.apply(this.list, arguments);
             if (this.useCache)
-                this.typeIndex(slice.call(args), this.len * 2);
+                this.typeIndex(slice.call(arguments), this.len * 2);
         }
         this.setLen();
         return true;
     },
+    remove: function (startKey, endKey) {
+        var startPos = indexOfKey(this.list, startKey),
+            endPos = endKey ? indexOfKey(this.list, endKey) : 2,
+            ret = 0 > startPos ? startPos : splice.call(this.list, startPos, endPos - startPos);
+        if (ret !== -1) {
+            if (this.useCache)
+                this.typeIndex(ret, startKey, endKey);
+            this.setLen();
+        }
+        return ret;
+    },
 
     // completely remove a key and its value, returning them in a plain array
+    /*
     del: function (key) {
         var pos = indexOfKey(this.list, key),
             ret = this.list.splice(pos, 2);
@@ -197,17 +214,13 @@ PL.prototype = {
         this.setLen();
         return ret;
     },
-
-    remove: function (startKey, endKey) {
-        var startPos = indexOfKey(this.list, startKey),
-            endPos = endKey ? indexOfKey(this.list, endKey) : endKey,
-            ret = 0 > startPos ? startPos : splice.call(this.list, startPos, endPos - startPos);
-        if (ret !== -1) {
-            if (this.useCache)
-                this.typeIndex(ret, startKey, endKey);
-            this.setLen();
-        }
-        return ret;
+*/
+// actually, the important distinction is whether you get something back
+    del: function (startKey, endKey) {
+        var ret = this.splice(startKey, endKey);
+        for (var i = 0, len = ret.length; i < len; i++)
+            ret[i] = null;
+        return;
     },
 
     get: function (key) {
@@ -234,26 +247,38 @@ PL.prototype = {
         return ret;
     },
 
+    // the complicated version
+//  flip: function (key) {
+//      var tmp, idx, len;
+//      if (key) {
+//          idx = indexOfKey(this.list, key);
+//          tmp = this.list[idx + 1];
+//          this.list[idx + 1] = this.list[idx];
+//          this.list[idx] = tmp;
+//          // TODO update cache without rebuilding the whole thing 
+//      } else {
+//          for (idx = 0, len = this.list.length; idx < len; idx += 2) {
+//              tmp = this.list[idx + 1];
+//              this.list[idx + 1] = this.list[idx];
+//              this.list[idx] = tmp;
+//          }
+//      }
+//      // rebuild entire cache, only makes sense when flipping entire table
+//      if (this.useCache) {
+//          this.cache = null;
+//          this.cache = {};
+//          this.typeIndex(this.keys(), this.list.length);
+//      }
+//  }
+
     flip: function (key) {
-        var tmp, idx, len;
         if (key) {
             idx = indexOfKey(this.list, key);
             tmp = this.list[idx + 1];
             this.list[idx + 1] = this.list[idx];
             this.list[idx] = tmp;
-            // TODO update cache without rebuilding the whole thing 
-        } else {
-            for (idx = 0, len = this.list.length; idx < len; idx += 2) {
-                tmp = this.list[idx + 1];
-                this.list[idx + 1] = this.list[idx];
-                this.list[idx] = tmp;
-            }
-        }
-        // rebuild entire cache, only makes sense when flipping entire table
-        if (this.useCache) {
-            this.cache = null;
-            this.cache = {};
-            this.typeIndex(this.keys(), this.list.length);
+        } else { // normal case
+            this.flipped = +!this.flipped;
         }
     }
 };
@@ -283,7 +308,10 @@ function Table () {
 }
 
 Table.prototype = {};
-// expose selected PL methods through Table's prototype
+// expose selected PL methods through Table's prototype. There are other ways to
+// allow access to white listed properties/methods, but I like the explicitness 
+// of this, since it allows a useful level of reflection without exposing the
+// the real object to scrutiny.
 each(publik.split('|'), function(name) {
     Table.prototype[name] = function () {
         var n = name, ret = this.__(n, arguments);
