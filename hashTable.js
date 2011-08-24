@@ -159,13 +159,9 @@ PL.prototype = {
         this.setLen();
         return true;
     }, 
-    // `set` will also unset (i.e. key: U), but I prefer doing so explicitly 
+
     unset: function (key) {
-        var idx = indexOfKey(this.list, key);
-        if (idx == -1)
-            this.list.push(key, U);
-        else
-            this.list[idx + 1] = U;
+        return this.set(key, U);
     },
     // store a list of key value pairs. requires an even number of arguments. 
     // If odd, it seems more reasonable to assume a mistake and throw an error 
