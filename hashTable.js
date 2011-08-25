@@ -259,22 +259,7 @@ PL.prototype = {
             this.typeIndex(this.keys(), this.list.length);
         }
     }
-// IFF we aren't tracking types to speed lookups, it's actually trivially easy
-// to pretend to flip, although to do it right requires either another property
-// on each instance and a lot of bookkeping to maintain they 'type cache' or
-// abandoning the cache idea... while the scenarios in which this silly thing
-// might be worth using do not, to me, seem likely to entail faking an assoc
-// array of thousand
-//    flip: function (key) {
-//        if (key) {
-//            idx = indexOfKey(this.list, key);
-//            tmp = this.list[idx + 1];
-//            this.list[idx + 1] = this.list[idx];
-//            this.list[idx] = tmp;
-//        } else { // normal case
-//            this.flipped = +!this.flipped;
-//        }
-//    }
+
 };
 
 // constructor that is exported for public use
