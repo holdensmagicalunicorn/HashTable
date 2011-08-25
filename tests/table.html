@@ -44,7 +44,7 @@ if (!Array.prototype.forEach) {
 }
 
 // begin tests
-    module("table");
+
     test('set and get with various valid key types', function() {
         expect(16);
         var testobj = new Table(),
@@ -88,34 +88,7 @@ if (!Array.prototype.forEach) {
         equal(testobj.get(1), identity, 'get works with numeric keys');
     });
     
-    test('keys', function () {
-        expect(7);
-        var testobj = new Table(), 
-            o1 = {foo: 'bar'}, 
-            a1 = ['a','b', o1], 
-            r1 = /^$/g, 
-            node = document.getElementById('test'), 
-            identity = function (x) { return x },
-            mockkeys, realkeys, i = 0;
-        
-        testobj.set('string', 'stringKeyValue');
-        testobj.set(o1, 'ObjectKeyValue');
-        testobj.set(a1, 'ArrayKeyValue');
-        testobj.set(r1, 'RegExpKeyValue');
-        testobj.set(node, 'DOMNodeKeyValue');
-        testobj.set(identity, 'FunctionKeyValue');
-        testobj.set(1, 'NumberKeyValue');
-        
-        mockkeys = ['string', o1, a1, r1, node, identity, 1];
-        realkeys = testobj.keys();
-        mockkeys.forEach(function (item, idx) {
-            return equal(realkeys[idx], item);
-        });
-    
-    
-    });
-
-    test('set, unset', function(U) {
+    test('set, unset', function() {
         expect(3);
         var testobj = new Table();
         // test 1, new object length is 0
@@ -125,9 +98,65 @@ if (!Array.prototype.forEach) {
         equal(testobj.get('string_key'), 'test', 'key was set');
         // test 3, unset a key
         testobj.unset('string_key');
-        deepEqual(testobj.get('string_key'), U, 'value of string_key is undefined');
+        strictEqual(testobj.get('string_key'), void(0), 'value of string_key is undefined');
 
     });
+        
+    test('store', function () {
+        expect(8);
+        var testobj = new Table(), 
+            o1 = {foo: 'bar'}, 
+            a1 = ['a','b', o1], 
+            r1 = /^$/g, 
+            node = document.getElementById('test'), 
+            identity = function (x) { return x },
+            values = ['stringKeyValue', 'ObjectKeyValue', 'ArrayKeyValue', 'RegExpKeyValue', 'DOMNodeKeyValue', 'FunctionKeyValue', 'NumberKeyValue'];
+        testobj.store('string', 'stringKeyValue', o1, 'ObjectKeyValue', a1, 'ArrayKeyValue', r1, 'RegExpKeyValue', node, 'DOMNodeKeyValue', identity, 'FunctionKeyValue', 1, 'NumberKeyValue');
+        equal(testobj.len, 7, 'object len == 7');
+        testobj.each(function (val, key, i) {
+            return equal(val, values[i]);
+        });
+    });
+
+    test('setting/storing illegal keys throw type errors', function () {
+        expect(5);
+        var testobj = new Table();
+
+        raises(function() {return testobj.set(true, 'some string') }, TypeError, 'Boolean is not a valid key type');
+        raises(function() {return testobj.set(void 0) }, TypeError, 'Undefined is not a valid key type');
+        raises(function() {return testobj.set(1/0) }, TypeError, 'Infinity is not a valid key type');
+        raises(function() {return testobj.set(1/'fruitloops') }, TypeError, 'NaN is not a valid key type');
+        raises(function() {return testobj.store('fred', function () { return 'bedrock'}, true, 'some string') }, TypeError, 'Boolean is not a valid key type');
+    });
+
+    
+    test('keys', function () {
+        expect(7);
+        var testobj = new Table(), 
+            o1 = {foo: 'bar'}, 
+            a1 = ['a','b', o1], 
+            r1 = /^$/g, 
+            node = document.getElementById('test'), 
+            identity = function (x) { return x },
+            expectedKeys, actualKeys, i = 0;
+        
+        testobj.set('string', 'stringKeyValue');
+        testobj.set(o1, 'ObjectKeyValue');
+        testobj.set(a1, 'ArrayKeyValue');
+        testobj.set(r1, 'RegExpKeyValue');
+        testobj.set(node, 'DOMNodeKeyValue');
+        testobj.set(identity, 'FunctionKeyValue');
+        testobj.set(1, 'NumberKeyValue');
+        
+        expectedKeys = ['string', o1, a1, r1, node, identity, 1];
+        actualKeys = testobj.keys();
+        expectedKeys.forEach(function (item, idx) {
+            return equal(actualKeys[idx], item);
+        });
+    
+    
+    });
+
 // we need each to work for subsequent tests
     test('each', function () {
         expect(7);
@@ -152,45 +181,8 @@ if (!Array.prototype.forEach) {
         });
     });
 
-    
-    test('store', function () {
-        expect(8);
-        var testobj = new Table(), 
-            o1 = {foo: 'bar'}, 
-            a1 = ['a','b', o1], 
-            r1 = /^$/g, 
-            node = document.getElementById('test'), 
-            identity = function (x) { return x },
-            values = ['stringKeyValue', 'ObjectKeyValue', 'ArrayKeyValue', 'RegExpKeyValue', 'DOMNodeKeyValue', 'FunctionKeyValue', 'NumberKeyValue'];
-        testobj.store('string', 'stringKeyValue', o1, 'ObjectKeyValue', a1, 'ArrayKeyValue', r1, 'RegExpKeyValue', node, 'DOMNodeKeyValue', identity, 'FunctionKeyValue', 1, 'NumberKeyValue');
-        equal(testobj.len, 7, 'object len == 7');
-        testobj.each(function (val, key, i) {
-            return equal(val, values[i]);
-        });
-    });
-    
-    test('del', function () {
-        expect(5);
-        var testobj = new Table(), 
-            o1 = {foo: 'bar'}, 
-            a1 = ['a','b', o1], 
-            r1 = /^$/g, 
-            node = document.getElementById('test'), 
-            identity = function (x) { return x },
-            values = ['stringKeyValue', 'ObjectKeyValue', 'ArrayKeyValue', 'RegExpKeyValue', 'DOMNodeKeyValue', 'FunctionKeyValue', 'NumberKeyValue'],
-            retValues = [identity, "FunctionKeyValue"], deleted;
-        testobj.store('string', 'stringKeyValue', o1, 'ObjectKeyValue', a1, 'ArrayKeyValue', r1, 'RegExpKeyValue', node, 'DOMNodeKeyValue', identity, 'FunctionKeyValue', 1, 'NumberKeyValue');
-        // test 1, make sure len is correct
-        equal(testobj.len, 7, 'len is correct');
-        // test 2, make sure we get a plain array back
-        deleted = testobj.del(identity);
-        
-        equal(deleted.length, retValues.length, 'del returns deleted key and value as plain array');
-        strictEqual(deleted[0], retValues[0], 'del returns deleted key in plain array');
-        strictEqual(deleted[1], retValues[1], 'del returns deleted value in plain array');
-        equal(testobj.len, 6, 'del reduces testobj.len by 1');
-    
-    });
+
+
 
     test('flip', function () {
         expect(15);
@@ -232,14 +224,14 @@ if (!Array.prototype.forEach) {
     });
 
     test('remove', function () {
-
+        expect(10);
         var testobj = new Table(), 
             o1 = {foo: 'bar'}, 
             a1 = ['a','b', o1], 
             r1 = /^$/g, 
             node = document.getElementById('test'), 
             identity = function (x) { return x },
-            deleted, expect;
+            deleted, expected;
         testobj.set('string', 'stringKeyValue');
         testobj.set(o1, 'ObjectKeyValue');
         testobj.set(a1, 'ArrayKeyValue');
@@ -247,15 +239,44 @@ if (!Array.prototype.forEach) {
         testobj.set(node, 'DOMNodeKeyValue');
         testobj.set(identity, 'FunctionKeyValue');
         testobj.set(1, 'NumberKeyValue');
-        expect = [a1, 'ArrayKeyValue', r1, 'RegExpKeyValue', node, 'DOMNodeKeyValue', identity, 'FunctionKeyValue'];
+        expected = [a1, 'ArrayKeyValue', r1, 'RegExpKeyValue', node, 'DOMNodeKeyValue', identity, 'FunctionKeyValue'];
         // test 1, make sure len is correct
         equal(testobj.len, 7, 'len is correct');
         // test 2, make sure we get a plain array back
         deleted = testobj.remove(a1, 1);
-        equal(deleted.length, expect.length, 'remove returns deleted keys and values as a plain array');
+        equal(deleted.length, expected.length, 'remove returns deleted keys and values as a plain array');
 		deleted.forEach(function (item, i) {
-			strictEqual(item, expect[i], 'item #' + (i + 1) + ' from array of deleted values is correct');
+			strictEqual(item, expected[i], 'item #' + (i + 1) + ' from array of deleted values is correct');
 		});
+    });
+    // del now calls remove, so all we have to test is that it really is 
+    // calling `remove`, which we can do by checking the length, and that it 
+    // really returns `undefined`
+    test('del', function () {
+        expect(5);
+        var testobj = new Table(), 
+            o1 = {foo: 'bar'}, 
+            a1 = ['a','b', o1], 
+            r1 = /^$/g, 
+            node = document.getElementById('test'), 
+            identity = function (x) { return x },
+            deleted ;
+        testobj.store('string', 'stringKeyValue', o1, 'ObjectKeyValue', a1, 'ArrayKeyValue', r1, 'RegExpKeyValue', node, 'DOMNodeKeyValue', identity, 'FunctionKeyValue', 1, 'NumberKeyValue');
+        // test 1, make sure len is correct
+        equal(testobj.len, 7, 'len is correct');
+        // test 2, with start and end value
+        deleted = testobj.del(r1, identity);
+        // test 3, make sure len is correct
+        equal(testobj.len, 5, 'del reduces length of Table');
+        // test 4, we got nothin
+        strictEqual(deleted, void(0), 'del returns undefined');
+    
+        // test 5, with start value only
+        deleted = testobj.del(a1);
+        // test 6, make sure len is correct
+        equal(testobj.len, 4, 'del reduces length of Table');
+        // test 7, we got nothin
+        strictEqual(deleted, void(0), 'del returns undefined');
     
     });
 

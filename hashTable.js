@@ -102,7 +102,6 @@ function PL (/* cacheByTypeIfLengthGreaterThan */) {
     this.list = [];
     this.len = 0;
     this.cache = {}; 
-    this.flipped = 0; // added when I realized (again) that I'm an idiot
     this.minBeforeCache = 1E3; // arbitrary choice
     this.useCache = false;
     if (arguments.length == 1 && typeof arguments[0] == 'number')
@@ -134,7 +133,7 @@ PL.prototype = {
 
     // updates len as reported to the proxy object
     setLen: function () {
-        if (this.len * 2 != this.list.length - this.flipped)
+        if (this.len * 2 != this.list.length)
             this.len = this.list.length > 1 ? this.list.length / 2 : 0;
 
         if (!this.useCache && this.list.length >= this.minBeforeCache) {
@@ -145,11 +144,16 @@ PL.prototype = {
 
     // set 1 key:value, if no value is provided and the key exists, set
     // value to undefined, otherwise create a new key with a value of undefined
-    set: function (key, value) {
-        var idx;
-        if (!typeCheck.simple(key))
-                throw new TypeError(toString.call(key).slice(8, -1) + ' is not a valid key type');
-        idx = this.list[indexOfKey(this.list, key)];
+    set: function () {
+        var idx, key, value;
+        if (!arguments.length) 
+            return;
+        key = arguments[0];
+        value = arguments[1];
+        if (!typeCheck.simple(key)) {
+                throw new TypeError(toStr.call(key).slice(8, -1) + ' is not a valid key type');
+        }
+        idx = indexOfKey(this.list, key);
         if (idx > -1)
             this.list[idx + 1] = value;
         else
@@ -161,7 +165,7 @@ PL.prototype = {
     }, 
 
     unset: function (key) {
-        return this.set(key, U);
+        return this.set(key);
     },
     // store a list of key value pairs. requires an even number of arguments. 
     // If odd, it seems more reasonable to assume a mistake and throw an error 
@@ -172,7 +176,7 @@ PL.prototype = {
 
         for (var i = 0; i < len; i += 2)
             if (!typeCheck.simple(arguments[i]))
-                throw new TypeError(toString.call(key).slice(8, -1) + ' is not a valid key type');
+                throw new TypeError(toStr.call(arguments[i]).slice(8, -1) + ' is not a valid key type');
 
         if (len && len < 3) {
             this.list[arguments[0]] = arguments[1];
@@ -190,7 +194,7 @@ PL.prototype = {
     },
     remove: function (startKey, endKey) {
         var startPos = indexOfKey(this.list, startKey),
-            endPos = endKey ? indexOfKey(this.list, endKey) : 2,
+            endPos = endKey ? indexOfKey(this.list, endKey) : startPos + 2,
             ret = 0 > startPos ? startPos : splice.call(this.list, startPos, endPos - startPos);
         if (ret !== -1) {
             if (this.useCache)
@@ -200,20 +204,9 @@ PL.prototype = {
         return ret;
     },
 
-    // completely remove a key and its value, returning them in a plain array
-    /*
-    del: function (key) {
-        var pos = indexOfKey(this.list, key),
-            ret = this.list.splice(pos, 2);
-        if (this.useCache)
-            this.typeIndex(ret, pos, pos + 1);
-        this.setLen();
-        return ret;
-    },
-*/
-// actually, the important distinction is whether you get something back
+// null a key or range of keys and return undefined
     del: function (startKey, endKey) {
-        var ret = this.splice(startKey, endKey);
+        var ret = this.remove(startKey, endKey);
         for (var i = 0, len = ret.length; i < len; i++)
             ret[i] = null;
         return;
@@ -243,40 +236,45 @@ PL.prototype = {
         return ret;
     },
 
-    // the complicated version
-//  flip: function (key) {
-//      var tmp, idx, len;
-//      if (key) {
-//          idx = indexOfKey(this.list, key);
-//          tmp = this.list[idx + 1];
-//          this.list[idx + 1] = this.list[idx];
-//          this.list[idx] = tmp;
-//          // TODO update cache without rebuilding the whole thing 
-//      } else {
-//          for (idx = 0, len = this.list.length; idx < len; idx += 2) {
-//              tmp = this.list[idx + 1];
-//              this.list[idx + 1] = this.list[idx];
-//              this.list[idx] = tmp;
-//          }
-//      }
-//      // rebuild entire cache, only makes sense when flipping entire table
-//      if (this.useCache) {
-//          this.cache = null;
-//          this.cache = {};
-//          this.typeIndex(this.keys(), this.list.length);
-//      }
-//  }
-
+    // the complicated version seems very wasteful
     flip: function (key) {
+        var tmp, idx, len;
         if (key) {
             idx = indexOfKey(this.list, key);
             tmp = this.list[idx + 1];
             this.list[idx + 1] = this.list[idx];
             this.list[idx] = tmp;
-        } else { // normal case
-            this.flipped = +!this.flipped;
+            // TODO update cache without rebuilding the whole thing 
+        } else {
+            for (idx = 0, len = this.list.length; idx < len; idx += 2) {
+                tmp = this.list[idx + 1];
+                this.list[idx + 1] = this.list[idx];
+                this.list[idx] = tmp;
+            }
+        }
+        // rebuild entire cache, only makes sense when flipping entire table
+        if (this.useCache) {
+            this.cache = null;
+            this.cache = {};
+            this.typeIndex(this.keys(), this.list.length);
         }
     }
+// IFF we aren't tracking types to speed lookups, it's actually trivially easy
+// to pretend to flip, although to do it right requires either another property
+// on each instance and a lot of bookkeping to maintain they 'type cache' or
+// abandoning the cache idea... while the scenarios in which this silly thing
+// might be worth using do not, to me, seem likely to entail faking an assoc
+// array of thousand
+//    flip: function (key) {
+//        if (key) {
+//            idx = indexOfKey(this.list, key);
+//            tmp = this.list[idx + 1];
+//            this.list[idx + 1] = this.list[idx];
+//            this.list[idx] = tmp;
+//        } else { // normal case
+//            this.flipped = +!this.flipped;
+//        }
+//    }
 };
 
 // constructor that is exported for public use
