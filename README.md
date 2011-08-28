@@ -23,7 +23,7 @@ http://www.opensource.org/licenses/gpl-3.0.html
 ## Public Methods
  - _set_, create or update a key
  - _get_, retrieve a value by key
- - _store_, stores one or more key:value pairs, if a single paramater is passed 
+ - _store_, stores one or more key:value pairs, if a single parameter is passed 
     it becomes a key with a value of undefined
  - _unset_, sets a value to `undefined` but leaves the key
  - _del_, returns specified key and associated value in an array and deletes 
@@ -50,7 +50,7 @@ there are probably some stupid mistakes I need to fix.
 
  - add filter, some, and reduce methods 
  
- - consider adding methods to manipulate the keys seperately, although this
+ - consider adding methods to manipulate the keys separately, although this
    breaks with user expectations for an associative structure
 
 
